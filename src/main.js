@@ -48,8 +48,10 @@ import {
 } from './renderGovernor.js';
 import { installScopeMask } from './scopeMask.js';
 import { initFirstRunExperience } from './firstRunExperience.js';
+import { initSubscriptionUI } from './subscriptionUI.js';
 
 initLogoGaze();
+initSubscriptionUI();
 
 /**
  * Extract a human-readable error message from any thrown value.
@@ -89,18 +91,18 @@ async function init() {
   try {
     loaderStatus.textContent = 'Configuring viewer...';
 
+    const runtimeConfigResponse = await fetch('/api/config', { credentials: 'same-origin' });
+    const runtimeConfig = runtimeConfigResponse.ok ? await runtimeConfigResponse.json() : {};
+
     // Set Cesium Ion token for World Terrain
-    const cesiumToken = import.meta.env.CESIUM_ION_TOKEN;
+    const cesiumToken = runtimeConfig.cesiumIonToken || '';
     if (cesiumToken) {
       Cesium.Ion.defaultAccessToken = cesiumToken;
     }
 
     // Set Google Maps API key for 3D Tiles
-    const googleApiKey = import.meta.env.GOOGLE_MAPS_API_KEY;
-    if (!googleApiKey) {
-      throw new Error('GOOGLE_MAPS_API_KEY not found. Set it as an environment variable.');
-    }
-    Cesium.GoogleMaps.defaultApiKey = googleApiKey;
+    const googleApiKey = runtimeConfig.googleMapsApiKey || '';
+    if (googleApiKey) Cesium.GoogleMaps.defaultApiKey = googleApiKey;
 
     // Expose API key globally for geocoding in locations.js
     window.__GOOGLE_MAPS_API_KEY__ = googleApiKey;
@@ -208,7 +210,7 @@ async function init() {
     // Hide Cesium's default globe — Google Photorealistic 3D Tiles provide their own
     // globe at all LODs (street level → orbital). The default globe's 2D imagery
     // clips through 3D tile buildings at close range.
-    viewer.scene.globe.show = false;
+    viewer.scene.globe.show = !googleApiKey;
 
     // Keep a sky behind Google 3D Tiles, but soften Cesium's high-intensity
     // default atmosphere. With the globe hidden its bright limb otherwise
@@ -218,9 +220,10 @@ async function init() {
     viewer.scene.skyAtmosphere.saturationShift = -0.12;
     viewer.scene.skyAtmosphere.brightnessShift = -0.08;
 
-    loaderStatus.textContent = 'Loading Google 3D Tiles...';
+    loaderStatus.textContent = googleApiKey ? 'Loading Google 3D Tiles...' : 'Loading the globe...';
     let tileset = null;
     try {
+      if (!googleApiKey) throw new Error('Google 3D Tiles require an active subscription');
       // Load Google Photorealistic 3D Tiles
       tileset = await Cesium.createGooglePhotorealistic3DTileset({
         onlyUsingWithGoogleGeocoder: true,

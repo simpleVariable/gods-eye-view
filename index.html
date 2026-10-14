@@ -46,6 +46,9 @@
     <button id="reset-globe-view" type="button" aria-label="Reset to full globe view" title="Reset camera and return to full globe view">
       <span class="material-symbols-outlined" aria-hidden="true">public</span>
     </button>
+    <button id="account-open" type="button" aria-label="Account and subscription" title="Sign in or subscribe">
+      <span class="material-symbols-outlined" aria-hidden="true">account_circle</span>
+    </button>
   </nav>
   <div id="global-loading-status" role="status" aria-live="polite" aria-atomic="true" hidden>
     <span id="global-loading-label">LOADING LIVE DATA</span>
@@ -62,6 +65,51 @@
 
   <!-- Toast notification -->
   <div id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+
+  <dialog id="account-dialog" class="account-dialog" aria-labelledby="account-title">
+    <section class="account-shell">
+      <header class="account-header">
+        <div>
+          <span class="account-kicker">GEV ACCOUNT</span>
+          <h2 id="account-title">Access the full globe</h2>
+        </div>
+        <button id="account-close" type="button" aria-label="Close account dialog" title="Close">
+          <span class="material-symbols-outlined" aria-hidden="true">close</span>
+        </button>
+      </header>
+      <p id="account-status" class="account-status" role="status" aria-live="polite"></p>
+      <form id="account-form" class="account-form">
+        <div class="account-mode" role="group" aria-label="Account action">
+          <button type="button" data-account-mode="login" aria-pressed="true">Sign in</button>
+          <button type="button" data-account-mode="signup" aria-pressed="false">Create account</button>
+        </div>
+        <label for="account-email">Email</label>
+        <input id="account-email" name="email" type="email" autocomplete="email" maxlength="254" required />
+        <label for="account-password">Password</label>
+        <input id="account-password" name="password" type="password" autocomplete="current-password" minlength="10" maxlength="200" required />
+        <button id="account-submit" class="account-primary" type="submit">Sign in</button>
+        <button id="account-magic" class="account-secondary" type="button">Email me a sign-in link</button>
+      </form>
+      <section id="account-signed-in" class="account-signed-in" hidden>
+        <p class="account-identity">Signed in as <strong id="account-email-label"></strong></p>
+        <p id="account-verification" class="account-verification" hidden>Verify your email using the link we sent before subscribing.</p>
+        <div id="account-pricing" class="account-pricing" hidden>
+          <label for="account-interval">Billing</label>
+          <select id="account-interval">
+            <option value="monthly">Monthly</option>
+            <option value="annual">Annual</option>
+          </select>
+          <button id="account-subscribe" class="account-primary" type="button">Subscribe</button>
+        </div>
+        <button id="account-portal" class="account-secondary" type="button" hidden>Manage subscription</button>
+        <button id="account-signout" class="account-secondary" type="button">Sign out</button>
+        <label id="account-admin-controls" class="account-admin" hidden>
+          <input id="account-free-toggle" type="checkbox" />
+          <span>Free access for everyone</span>
+        </label>
+      </section>
+    </section>
+  </dialog>
 
   <!-- Safe frame guides for recording composition -->
   <div id="safe-frame-overlay">

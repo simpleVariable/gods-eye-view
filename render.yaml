@@ -9,7 +9,7 @@ services:
   - type: web
     name: gods-eye-view
     runtime: node
-    plan: free
+    plan: starter
     autoDeploy: true
     buildCommand: npm ci && npm run build
     startCommand: npm start
@@ -27,12 +27,39 @@ services:
       # Render terminates TLS and forwards on this port.
       - key: HOST
         value: "0.0.0.0"
+      - key: GEV_TRUST_PROXY
+        value: "1"
+      - key: GEV_FREE_FOR_ALL
+        value: "1"
+      - key: APP_BASE_URL
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: gev-subscriptions
+          property: connectionString
 
-      # REQUIRED. Paste your key in the Render dashboard — never commit it.
-      # RESTRICT IT FIRST: Google Cloud Console -> Credentials -> your key ->
-      # Application restrictions -> Websites -> add your Render URL. An
-      # unrestricted key on a public site can be scraped and billed to you.
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM
+        sync: false
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+      - key: STRIPE_PRICE_MONTHLY
+        sync: false
+      - key: STRIPE_PRICE_ANNUAL
+        sync: false
+
+      # Browser key: restrict to your site referrer and Maps Tiles API.
       - key: GOOGLE_MAPS_API_KEY
+        sync: false
+      # Server-only key: restrict to Places and Street View Static APIs.
+      - key: GOOGLE_MAPS_SERVER_API_KEY
+        sync: false
+      - key: CESIUM_ION_TOKEN
         sync: false
 
       # REQUIRED FOR CONVERSATIONAL VOICE. Without it the microphone still
@@ -71,3 +98,9 @@ services:
         value: "80"
       - key: CCTV_MAX_SOURCES
         value: "3000"
+
+databases:
+  - name: gev-subscriptions
+    databaseName: gev_subscriptions
+    user: gev_subscriptions
+    plan: starter

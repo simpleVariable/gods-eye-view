@@ -61,6 +61,7 @@ import {
   validTerrainResult,
 } from './src/data/terrainHeightsProxy.js';
 import { VOICE_MODELS, isKnownVoiceTier, resolveVoiceModel } from './src/voice/voiceCost.js';
+import { subscriptionPlugin } from './server/subscriptionPlugin.js';
 
 /** Resolve __dirname for ESM context. */
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -5402,7 +5403,7 @@ function cctvProxy() {
 
   /** Fetch a Google Street View static image as a fallback frame. Requires GOOGLE_MAPS_API_KEY. */
   const streetViewFallback = async ({ lat, lon, heading, fov, pitch }) => {
-    const streetViewKey = process.env.GOOGLE_MAPS_API_KEY;
+    const streetViewKey = process.env.GOOGLE_MAPS_SERVER_API_KEY;
     if (!streetViewKey || !Number.isFinite(lat) || !Number.isFinite(lon)) return null;
     try {
       const sv = new URL('https://maps.googleapis.com/maps/api/streetview');
@@ -5594,7 +5595,9 @@ function cctvProxy() {
             return;
           }
 
-          const sv = await streetViewFallback({ lat, lon, heading, fov, pitch });
+          const sv = req.gevAllowGoogleFallback === false
+            ? null
+            : await streetViewFallback({ lat, lon, heading, fov, pitch });
           if (sv?.ok) {
             setHealth(cameraId, {
               status: 'degraded',
@@ -6257,7 +6260,7 @@ function googlePlacesContextProxy() {
         return;
       }
 
-      const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+      const apiKey = process.env.GOOGLE_MAPS_SERVER_API_KEY;
       if (!apiKey) {
         res.statusCode = 503;
         res.setHeader('Content-Type', 'application/json');
@@ -6371,7 +6374,7 @@ function googlePlacesContextProxy() {
         return;
       }
 
-      const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+      const apiKey = process.env.GOOGLE_MAPS_SERVER_API_KEY;
       if (!apiKey) {
         res.statusCode = 503;
         res.setHeader('Content-Type', 'application/json');
@@ -9285,6 +9288,7 @@ export default defineConfig(({ mode }) => {
   const env = { ...process.env };
   return {
     plugins: [
+      subscriptionPlugin(),
       cesium(),
       openSkyProxy(),
       celestrakProxy(),
@@ -9334,11 +9338,6 @@ export default defineConfig(({ mode }) => {
         if (raw === 'true') return true;
         return raw.split(',').map((host) => host.trim()).filter(Boolean);
       })(),
-    },
-    // Expose selected API keys to the browser via import.meta.env.*
-    define: {
-      'import.meta.env.GOOGLE_MAPS_API_KEY': JSON.stringify(env.GOOGLE_MAPS_API_KEY),
-      'import.meta.env.CESIUM_ION_TOKEN': JSON.stringify(env.CESIUM_ION_TOKEN),
     },
     build: {
       // The Cesium engine bundle is inherently large; raise the warning ceiling
