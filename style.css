@@ -7197,7 +7197,7 @@ body.scene-playback-mode :is(#clear-selected-layers, #reset-globe-view) {
   #left-panel-stack {
     top: 70px;
     right: 16px;
-    bottom: calc(50vh + 8px);
+    bottom: calc(42vh + 8px);
     left: 16px;
     width: auto;
     max-height: none;
@@ -7205,7 +7205,7 @@ body.scene-playback-mode :is(#clear-selected-layers, #reset-globe-view) {
   }
 
   #right-context-rail {
-    top: calc(50vh + 8px);
+    top: calc(58vh + 8px);
     right: 16px;
     /* The rail goes edge-to-edge at this width, so its floor is what decides
        whether the required Google/Cesium credit line survives. The credit's
@@ -7560,7 +7560,7 @@ body.recording-mode #cesium-credits {
   }
 
   #left-panel-stack {
-    bottom: calc(50vh + 8px);
+    bottom: calc(42vh + 8px);
   }
 }
 /* ── Compact accordion command dock ──────────── */
@@ -8426,7 +8426,7 @@ body:not(.ui-clean-view):not(.recording-mode):has(#intel-hud[data-variant='minim
   }
 
   #left-panel-stack {
-    bottom: calc(50vh + 8px);
+    bottom: calc(42vh + 8px);
   }
 }
 
