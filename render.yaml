@@ -11,7 +11,7 @@ services:
     runtime: node
     plan: starter
     autoDeploy: true
-    buildCommand: npm ci && npm run build
+    buildCommand: PUPPETEER_SKIP_DOWNLOAD=true npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /
     envVars:
