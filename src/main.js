@@ -49,7 +49,9 @@ import {
 import { installScopeMask } from './scopeMask.js';
 import { initFirstRunExperience } from './firstRunExperience.js';
 import { initSubscriptionUI } from './subscriptionUI.js';
+import { initI18n } from './i18n.js';
 
+initI18n();
 initLogoGaze();
 initSubscriptionUI();
 
