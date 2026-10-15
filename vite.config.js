@@ -62,6 +62,7 @@ import {
 } from './src/data/terrainHeightsProxy.js';
 import { VOICE_MODELS, isKnownVoiceTier, resolveVoiceModel } from './src/voice/voiceCost.js';
 import { subscriptionPlugin } from './server/subscriptionPlugin.js';
+import { dogfightPlugin } from './server/dogfightPlugin.js';
 
 /** Resolve __dirname for ESM context. */
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -9315,6 +9316,7 @@ export default defineConfig(({ mode }) => {
       airportsData(),
       productionHeaders(),
       openRouterProxy(),
+      dogfightPlugin(),
     ].map((plugin, index) => (index === 0 ? plugin : alsoServeInPreview(plugin))),
     server: {
       host: env.HOST || 'localhost',
@@ -9346,6 +9348,12 @@ export default defineConfig(({ mode }) => {
       // The Cesium engine bundle is inherently large; raise the warning ceiling
       // so the build log isn't dominated by an expected chunk-size notice.
       chunkSizeWarningLimit: 1500,
+      rollupOptions: {
+        input: {
+          main: path.resolve(__dirname, 'index.html'),
+          dogfight: path.resolve(__dirname, 'dogfight.html'),
+        },
+      },
     },
   };
 });

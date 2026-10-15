@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dogfight — God's Eye View</title>
+  <link rel="icon" href="data:," />
+</head>
+<body>
+  <div id="world"></div>
+  <div id="credits"></div>
+  <div id="tags"></div>
+
+  <div id="hud" hidden>
+    <div id="crosshair"></div>
+    <div id="lead" hidden></div>
+    <div id="lock" hidden></div>
+    <div id="damage-flash"></div>
+    <div id="hit-marker" hidden>✕</div>
+
+    <div class="panel" id="flight">
+      <div class="row"><span>SPD</span><b id="v-spd">0</b><i>km/h</i></div>
+      <div class="row"><span>ALT</span><b id="v-alt">0</b><i>m</i></div>
+      <div class="row"><span>HDG</span><b id="v-hdg">000</b><i>°</i></div>
+      <div class="row"><span>THR</span><div class="bar"><div id="bar-thr"></div></div></div>
+      <div class="row dim"><span>ASSIST</span><b id="v-assist">ON</b></div>
+    </div>
+
+    <div class="panel" id="vitals">
+      <div class="row"><span>HULL</span><div class="bar hp"><div id="bar-hp"></div></div><b id="v-hp">100</b></div>
+      <div class="row"><span>AMMO</span><div class="bar ammo"><div id="bar-ammo"></div></div></div>
+      <div class="row dim"><span>K / D</span><b id="v-kd">0 / 0</b></div>
+    </div>
+
+    <div class="panel" id="board">
+      <h3>PILOTS <small id="v-net"></small></h3>
+      <ol id="board-list"></ol>
+    </div>
+
+    <canvas id="radar" width="360" height="360"></canvas>
+    <div id="alerts"></div>
+    <ul id="feed"></ul>
+    <div id="help">W/S pitch · A/D roll · Q/E yaw · R/F throttle · SPACE fire · G assist · C camera</div>
+
+    <div id="death" hidden>
+      <h2 id="death-title">SHOT DOWN</h2>
+      <p id="death-sub"></p>
+      <p id="death-timer"></p>
+    </div>
+  </div>
+
+  <div id="menu">
+    <div class="card">
+      <h1>DOGFIGHT</h1>
+      <p class="sub">Open-skies multiplayer. Pick a callsign and an aircraft — no account needed.</p>
+      <label for="callsign">Callsign</label>
+      <input id="callsign" maxlength="16" autocomplete="off" spellcheck="false" placeholder="e.g. Maverick" />
+      <label>Aircraft</label>
+      <div id="planes"></div>
+      <p id="menu-error" role="alert"></p>
+      <button id="enter" type="button">ENTER ARENA</button>
+      <p class="fine">
+        W/S pitch · A/D roll · Q/E yaw · R/F throttle · Space or click to fire · G flight assist · C camera · Tab scoreboard
+      </p>
+    </div>
+  </div>
+
+  <div id="offline" hidden>
+    <h2>Connection lost</h2>
+    <button id="reload" type="button">Reconnect</button>
+  </div>
+
+  <script type="module" src="/src/dogfight/main.js"></script>
+</body>
+</html>

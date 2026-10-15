@@ -7,6 +7,12 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
 
 ### Added
 
+- Added Dogfight, an online multiplayer plane game at `/dogfight`: pick a
+  callsign and one of six aircraft, no account required. The server
+  (`server/dogfightRoom.js`, WebSocket at `/ws/dogfight`) is authoritative for
+  gunfire, hits, kills and respawns and bounds-checks client flight state.
+  Coverage in `src/dogfight/dogfight.test.mjs`; browser smoke test in
+  `scripts/qa-dogfight.mjs`.
 - Added honest aircraft identity narration: callsign, operator, registration,
   type, and route come only from selected-contact context, and missing operator,
   route, or type enrichment is named explicitly.
