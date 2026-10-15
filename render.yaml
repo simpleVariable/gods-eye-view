@@ -18,12 +18,9 @@ services:
       # Render's free tier runs Node 22 by default; this app requires 24.14.x or 26.x.
       - key: NODE_VERSION
         value: 24.15.0
-      # Vite's preview server rejects unrecognised Host headers, so without this
-      # every request to the Render URL comes back "Blocked request". The
-      # leading dot is a suffix match, which covers whatever subdomain Render
-      # assigns without having to know it in advance.
+      # Allow Render's onrender.com suffix and the exact service hostname.
       - key: PREVIEW_ALLOWED_HOSTS
-        value: ".onrender.com"
+        value: ".onrender.com,vista-nivel-dios.onrender.com"
       # Render terminates TLS and forwards on this port.
       - key: HOST
         value: "0.0.0.0"
