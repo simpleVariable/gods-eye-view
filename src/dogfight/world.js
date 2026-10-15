@@ -1,7 +1,14 @@
 import * as Cesium from 'cesium';
 import {
-  COMBAT, arenaToLonLat, orthonormalize, vAdd, vNorm, vRight, vScale, vSub,
+  ARENA, COMBAT, arenaToLonLat, orthonormalize, vAdd, vNorm, vRight, vScale, vSub,
 } from './shared.js';
+
+let anchor = ARENA.anchor;
+
+/** Point the local arena frame at the room's geodetic centre. */
+export function setAnchor(next) {
+  anchor = next;
+}
 
 const ellipsoid = Cesium.Ellipsoid.WGS84;
 const scratchCart = new Cesium.Cartesian3();
@@ -14,7 +21,7 @@ const worldToWindow = Cesium.SceneTransforms.worldToWindowCoordinates
 
 /** Arena metres [x, y, z] → ECEF. */
 export function toCartesian(p, out = new Cesium.Cartesian3()) {
-  const { lat, lon } = arenaToLonLat(p[0], p[1]);
+  const { lat, lon } = arenaToLonLat(p[0], p[1], anchor);
   return Cesium.Cartesian3.fromDegrees(lon, lat, p[2], ellipsoid, out);
 }
 

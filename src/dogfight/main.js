@@ -7,18 +7,21 @@ import {
 import { connect } from './net.js';
 import { createInput } from './input.js';
 import { createHud } from './hud.js';
-import { createWorld } from './world.js';
+import { createWorld, setAnchor } from './world.js';
 
 /** Remote aircraft are drawn this far in the past so motion stays smooth. */
 const INTERP_MS = 110;
 const STATE_INTERVAL_MS = 1000 / NET.clientStateHz;
 const LEAD_RANGE_M = 3000;
 const LEAD_CONE_COS = Math.cos((25 * Math.PI) / 180);
-const STORAGE = { name: 'dogfight.name', plane: 'dogfight.plane' };
+const STORAGE = { name: 'dogfight.name', plane: 'dogfight.plane', place: 'dogfight.place' };
+const CONTROLS_HINT_MS = 7000;
+const GEOCODE_TIMEOUT_MS = 6000;
 
 const $ = (id) => document.getElementById(id);
 const menu = $('menu');
 const callsign = $('callsign');
+const placeInput = $('place');
 const enterButton = $('enter');
 const menuError = $('menu-error');
 
@@ -26,6 +29,7 @@ const hud = createHud();
 let selectedPlane = localStorage.getItem(STORAGE.plane);
 if (!PLANES[selectedPlane]) selectedPlane = DEFAULT_PLANE;
 callsign.value = localStorage.getItem(STORAGE.name) || '';
+placeInput.value = localStorage.getItem(STORAGE.place) || '';
 
 // ── Menu ────────────────────────────────────────────────────────────────────
 
@@ -99,6 +103,7 @@ const input = createInput({
   onCamera() {
     camMode = camMode === 'chase' ? 'cockpit' : 'chase';
   },
+  onControls: () => hud.toggleControls(),
 });
 
 function showMenuError(text) {
@@ -107,17 +112,55 @@ function showMenuError(text) {
   phase = 'menu';
 }
 
-function enter() {
+/** "lat, lon" or a free-text place name → `{lat, lon}`; null when nothing matches. */
+async function resolvePlace(text) {
+  const q = text.trim();
+  if (!q) return null;
+  const pair = q.match(/^(-?\d+(?:\.\d+)?)\s*[,\s]\s*(-?\d+(?:\.\d+)?)$/);
+  if (pair) return { lat: Number(pair[1]), lon: Number(pair[2]) };
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), GEOCODE_TIMEOUT_MS);
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(q)}`,
+      { signal: ctl.signal, headers: { Accept: 'application/json' } },
+    );
+    if (!res.ok) throw new Error(`geocoder ${res.status}`);
+    const [hit] = await res.json();
+    return hit ? { lat: Number(hit.lat), lon: Number(hit.lon) } : null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function enter() {
+  if (phase !== 'menu') return;
   const name = callsign.value.trim();
   if (!name) { showMenuError('Enter a callsign first.'); callsign.focus(); return; }
   if (!world) { showMenuError('The 3D engine is still loading — one moment.'); return; }
   localStorage.setItem(STORAGE.name, name);
+  localStorage.setItem(STORAGE.place, placeInput.value.trim());
   menuError.textContent = '';
   enterButton.disabled = true;
   phase = 'joining';
+
+  let place = null;
+  if (placeInput.value.trim()) {
+    menuError.textContent = 'Finding that place…';
+    try {
+      place = await resolvePlace(placeInput.value);
+    } catch {
+      showMenuError('Could not look that place up. Check your connection or leave it blank.');
+      return;
+    }
+    if (!place) { showMenuError('No match for that place — try a city or landmark name.'); placeInput.focus(); return; }
+    menuError.textContent = '';
+  }
+
   net = connect({
     name,
     plane: selectedPlane,
+    place,
     onMessage: onMessage,
     onClose(opened) {
       if (phase === 'playing') $('offline').hidden = false;
@@ -126,7 +169,9 @@ function enter() {
   });
 }
 enterButton.addEventListener('click', enter);
-callsign.addEventListener('keydown', (e) => { if (e.key === 'Enter') enter(); });
+for (const field of [callsign, placeInput]) {
+  field.addEventListener('keydown', (e) => { if (e.key === 'Enter') enter(); });
+}
 $('reload').addEventListener('click', () => location.reload());
 
 // ── Network messages ────────────────────────────────────────────────────────
@@ -147,6 +192,7 @@ function revive(s) {
   sentFire = false;
   world.enterGameCamera();
   hud.hideDeath();
+  hud.flashControls(CONTROLS_HINT_MS);
 }
 
 function onMessage(msg) {
@@ -154,10 +200,12 @@ function onMessage(msg) {
     case 'welcome':
       me.id = msg.id;
       me.plane = PLANES[msg.plane];
+      setAnchor(msg.anchor);
       me.visual?.destroy();
       me.visual = world.createPlaneVisual(me.plane);
       revive(msg.spawn);
       menu.hidden = true;
+      document.activeElement?.blur();
       hud.show(true);
       input.setEnabled(true);
       phase = 'playing';
@@ -208,7 +256,8 @@ function onSnapshot(msg) {
 
   for (const s of msg.shots) world.addTracer(s.o, s.v, now);
   for (const e of msg.ev) onEvent(e);
-  hud.board(board, me.id, pingMs, input.state.board);
+  hud.board(board, me.id, pingMs);
+  if (input.state.board) hud.scoreboard(board, me.id, true);
 }
 
 function onEvent(e) {
@@ -323,7 +372,7 @@ function frame() {
   const c = input.state;
   if (c.board !== wasBoardKey) {
     wasBoardKey = c.board;
-    hud.board(board, me.id, pingMs, c.board);
+    hud.scoreboard(board, me.id, c.board);
   }
 
   const flying = me.alive && !me.frozen;

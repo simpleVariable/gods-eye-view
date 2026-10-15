@@ -40,7 +40,29 @@
     <canvas id="radar" width="360" height="360"></canvas>
     <div id="alerts"></div>
     <ul id="feed"></ul>
-    <div id="help">W/S pitch · A/D roll · Q/E yaw · R/F throttle · SPACE fire · G assist · C camera</div>
+    <button id="controls-btn" type="button" aria-controls="controls" aria-expanded="false">? CONTROLS</button>
+    <div class="panel" id="controls" hidden>
+      <h3>CONTROLS</h3>
+      <dl>
+        <dt>W / S</dt><dd>Pitch down / up</dd>
+        <dt>A / D</dt><dd>Roll left / right</dd>
+        <dt>Q / E</dt><dd>Yaw left / right</dd>
+        <dt>R / F</dt><dd>Throttle up / down</dd>
+        <dt>Space / click</dt><dd>Fire guns</dd>
+        <dt>G</dt><dd>Flight assist on / off</dd>
+        <dt>C</dt><dd>Chase / cockpit camera</dd>
+        <dt>Tab (hold)</dt><dd>Full scoreboard</dd>
+        <dt>H</dt><dd>Show / hide this panel</dd>
+      </dl>
+    </div>
+
+    <div class="panel" id="scoreboard" hidden>
+      <h3>SCOREBOARD</h3>
+      <table>
+        <thead><tr><th>Pilot</th><th>Aircraft</th><th>Kills</th><th>Deaths</th></tr></thead>
+        <tbody id="scoreboard-body"></tbody>
+      </table>
+    </div>
 
     <div id="death" hidden>
       <h2 id="death-title">SHOT DOWN</h2>
@@ -55,12 +77,14 @@
       <p class="sub">Open-skies multiplayer. Pick a callsign and an aircraft — no account needed.</p>
       <label for="callsign">Callsign</label>
       <input id="callsign" maxlength="16" autocomplete="off" spellcheck="false" placeholder="e.g. Maverick" />
+      <label for="place">Spawn at (optional)</label>
+      <input id="place" maxlength="80" autocomplete="off" spellcheck="false" placeholder="City, landmark or lat, lon — e.g. Tokyo" />
       <label>Aircraft</label>
       <div id="planes"></div>
       <p id="menu-error" role="alert"></p>
       <button id="enter" type="button">ENTER ARENA</button>
       <p class="fine">
-        W/S pitch · A/D roll · Q/E yaw · R/F throttle · Space or click to fire · G flight assist · C camera · Tab scoreboard
+        Pilots who spawn near the same place share an arena. The CONTROLS button in game lists the keys.
       </p>
     </div>
   </div>

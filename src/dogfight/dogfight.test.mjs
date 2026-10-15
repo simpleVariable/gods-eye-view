@@ -4,9 +4,11 @@ import { createServer } from 'node:http';
 import { WebSocket } from 'ws';
 import {
   ARENA, COMBAT, NET, PLANES,
-  controlAuthority, createFlightState, sanitizeName, stepFlight, vCross, vDot, vLen,
+  controlAuthority, createFlightState, lonLatToArena, sanitizeName, sanitizePlace, stepFlight,
+  vCross, vDot, vLen,
 } from './shared.js';
 import { DogfightRoom } from '../../server/dogfightRoom.js';
+import { DogfightHub } from '../../server/dogfightHub.js';
 import { attachDogfight } from '../../server/dogfightPlugin.js';
 
 const plane = PLANES.citation2;
@@ -188,9 +190,40 @@ test('ground contact and leaving the arena are fatal without crediting anyone', 
   assert.ok(kills.every((k) => k.by === 0));
 });
 
+test('hub groups nearby places into one arena and spawns pilots at their place', () => {
+  const hub = new DogfightHub({ rand: () => 0.5 });
+  const tokyo = { lat: 35.68, lon: 139.76 };
+  const near = { lat: 35.70, lon: 139.78 };
+  const paris = { lat: 48.85, lon: 2.35 };
+
+  const a = hub.join(makeConn(), { name: 'A', plane: 'jet', place: tokyo });
+  const b = hub.join(makeConn(), { name: 'B', plane: 'jet', place: near });
+  const c = hub.join(makeConn(), { name: 'C', plane: 'jet', place: paris });
+  assert.equal(a.room, b.room);
+  assert.notEqual(a.room, c.room);
+  assert.equal(hub.rooms.size, 2);
+
+  const [hx, hy] = lonLatToArena(near.lat, near.lon, a.room.anchor);
+  assert.ok(Math.abs(b.player.p[0] - hx) < 1);
+  assert.ok(Math.abs(b.player.p[1] - hy) < 1);
+
+  hub.leave(c.room, c.player.id);
+  assert.equal(hub.rooms.size, 1);
+});
+
+test('hub ignores invalid places and caps the number of arenas', () => {
+  assert.equal(sanitizePlace({ lat: 'x', lon: 3 }), null);
+  assert.equal(sanitizePlace({ lat: 95, lon: 3 }), null);
+  assert.deepEqual(sanitizePlace({ lat: '10', lon: '20' }), { lat: 10, lon: 20 });
+
+  const hub = new DogfightHub({ maxRooms: 1 });
+  assert.ok(hub.join(makeConn(), { name: 'A', plane: 'jet', place: { lat: 999, lon: 0 } }).player);
+  assert.match(hub.join(makeConn(), { name: 'B', plane: 'jet', place: { lat: 10, lon: 10 } }).error, /busy/i);
+});
+
 test('websocket transport: join handshake, snapshots and rejection of a blank callsign', async () => {
   const http = createServer();
-  const dispose = attachDogfight(http, new DogfightRoom());
+  const dispose = attachDogfight(http, new DogfightHub());
   await new Promise((resolve) => http.listen(0, '127.0.0.1', resolve));
   const { port } = http.address();
   const url = `ws://127.0.0.1:${port}${NET.path}`;

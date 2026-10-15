@@ -1,6 +1,6 @@
 import { WebSocketServer } from 'ws';
 import { NET } from '../src/dogfight/shared.js';
-import { DogfightRoom } from './dogfightRoom.js';
+import { DogfightHub } from './dogfightHub.js';
 
 const MAX_PAYLOAD_BYTES = 2048;
 const MAX_CONNECTIONS_PER_IP = 4;
@@ -25,21 +25,21 @@ function sameOrigin(req) {
 }
 
 /**
- * Attach the dogfight room to an http server at `NET.path`.
+ * Attach the dogfight hub to an http server at `NET.path`.
  * Returns a disposer that stops the timer and closes every socket.
  */
-export function attachDogfight(httpServer, room = new DogfightRoom()) {
+export function attachDogfight(httpServer, hub = new DogfightHub()) {
   const wss = new WebSocketServer({ noServer: true, maxPayload: MAX_PAYLOAD_BYTES });
   const perIp = new Map();
   let timer = null;
 
   const ensureTimer = () => {
     if (timer) return;
-    timer = setInterval(() => room.tick(), Math.round(1000 / NET.tickHz));
+    timer = setInterval(() => hub.tick(), Math.round(1000 / NET.tickHz));
     timer.unref?.();
   };
   const maybeStopTimer = () => {
-    if (room.size === 0 && timer) {
+    if (hub.size === 0 && timer) {
       clearInterval(timer);
       timer = null;
     }
@@ -60,6 +60,7 @@ export function attachDogfight(httpServer, room = new DogfightRoom()) {
   const onConnection = (ws, ip) => {
     perIp.set(ip, (perIp.get(ip) || 0) + 1);
     let player = null;
+    let room = null;
     let tokens = RATE_BURST;
     let refilled = Date.now();
 
@@ -83,13 +84,13 @@ export function attachDogfight(httpServer, room = new DogfightRoom()) {
 
       if (!player) {
         if (msg.t !== 'join') return;
-        const result = room.join(conn, msg);
+        const result = hub.join(conn, msg);
         if (result.error) {
           conn.send({ t: 'err', msg: result.error });
           ws.close(1008, 'join rejected');
           return;
         }
-        player = result.player;
+        ({ player, room } = result);
         player.kick = () => ws.close(1008, 'invalid data');
         ensureTimer();
         return;
@@ -100,7 +101,7 @@ export function attachDogfight(httpServer, room = new DogfightRoom()) {
     ws.on('close', () => {
       const left = (perIp.get(ip) || 1) - 1;
       if (left > 0) perIp.set(ip, left); else perIp.delete(ip);
-      if (player) room.leave(player.id);
+      if (player) hub.leave(room, player.id);
       maybeStopTimer();
     });
     ws.on('error', () => ws.terminate());

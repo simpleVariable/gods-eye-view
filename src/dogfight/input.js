@@ -8,7 +8,7 @@ const BLOCKED_DEFAULTS = new Set([
  * Keyboard / mouse controls with smoothed axes.
  * `state.pitch > 0` pulls the nose up, `roll > 0` banks right, `yaw > 0` turns right.
  */
-export function createInput({ onCamera } = {}) {
+export function createInput({ onCamera, onControls } = {}) {
   const keys = new Set();
   let mouseFire = false;
   let enabled = false;
@@ -27,11 +27,14 @@ export function createInput({ onCamera } = {}) {
     if (e.repeat) return;
     if (e.code === 'KeyG') state.assist = !state.assist;
     if (e.code === 'KeyC') onCamera?.();
+    if (e.code === 'KeyH') onControls?.();
   });
   window.addEventListener('keyup', (e) => keys.delete(e.code));
   window.addEventListener('blur', () => { keys.clear(); mouseFire = false; });
   window.addEventListener('mousedown', (e) => {
-    if (enabled && e.button === 0) mouseFire = true;
+    if (enabled && e.button === 0 && !(e.target instanceof Element && e.target.closest('button'))) {
+      mouseFire = true;
+    }
   });
   window.addEventListener('mouseup', (e) => { if (e.button === 0) mouseFire = false; });
 

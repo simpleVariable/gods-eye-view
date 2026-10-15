@@ -100,10 +100,25 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #050a12; col
 #feed li.mine { border-left: 3px solid var(--accent); }
 #feed li.sys { color: var(--dim); }
 
-#help {
-  position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); font-size: 11px;
-  color: var(--dim); pointer-events: none; white-space: nowrap;
+#controls-btn {
+  position: fixed; left: 50%; bottom: 8px; transform: translateX(-50%); padding: 5px 14px;
+  font: inherit; font-size: 11px; letter-spacing: 0.1em; color: var(--ink); cursor: pointer;
+  background: var(--panel); border: 1px solid rgba(94, 225, 255, 0.35); border-radius: 14px;
 }
+#controls-btn:hover { border-color: var(--accent); }
+#controls { left: 50%; bottom: 44px; transform: translateX(-50%); min-width: 300px; }
+#controls h3, #scoreboard h3 { margin: 0 0 8px; font-size: 11px; color: var(--dim); letter-spacing: 0.12em; }
+#controls dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 16px; margin: 0; }
+#controls dt { color: var(--accent); }
+#controls dd { margin: 0; }
+
+#scoreboard { left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 460px; z-index: 6; }
+#scoreboard table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#scoreboard th { text-align: left; color: var(--dim); font-weight: 400; padding: 2px 8px; }
+#scoreboard td { padding: 3px 8px; }
+#scoreboard th:nth-child(n+3), #scoreboard td:nth-child(n+3) { text-align: right; }
+#scoreboard tr.me td { color: var(--accent); }
+#scoreboard tr.dead td { opacity: 0.45; }
 
 #death {
   position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
@@ -133,11 +148,11 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #050a12; col
 #menu h1 { margin: 0; letter-spacing: 0.32em; font-size: 34px; color: var(--accent); }
 #menu .sub { color: var(--dim); margin: 6px 0 18px; }
 #menu label { display: block; font-size: 11px; letter-spacing: 0.12em; color: var(--dim); margin: 14px 0 6px; }
-#callsign {
+#callsign, #place {
   width: 100%; padding: 10px 12px; font: inherit; font-size: 16px; color: var(--ink);
   background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(94, 225, 255, 0.35); border-radius: 6px;
 }
-#callsign:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+#callsign:focus, #place:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 #planes { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 10px; }
 .plane {
   text-align: left; padding: 10px 12px; font: inherit; color: var(--ink); cursor: pointer;

@@ -11,6 +11,8 @@ of current runtime behavior, see [`docs/CURRENT-STATE.md`](docs/CURRENT-STATE.md
   callsign and one of six aircraft, no account required. The server
   (`server/dogfightRoom.js`, WebSocket at `/ws/dogfight`) is authoritative for
   gunfire, hits, kills and respawns and bounds-checks client flight state.
+  Pilots can enter a place to spawn at; players near the same place share an
+  arena (`server/dogfightHub.js`).
   Coverage in `src/dogfight/dogfight.test.mjs`; browser smoke test in
   `scripts/qa-dogfight.mjs`.
 - Added honest aircraft identity narration: callsign, operator, registration,

@@ -56,6 +56,16 @@ try {
     check(`${label} has airspeed`, speed > 100, speed);
   }
 
+  const hidden = (p, id) => p.page.$eval(id, (n) => n.hidden);
+  check('controls hint is shown after spawn', !(await hidden(b, '#controls')));
+  await a.page.bringToFront();
+  await a.page.keyboard.down('Tab');
+  await sleep(300);
+  check('Tab shows the scoreboard', !(await hidden(a, '#scoreboard')));
+  await a.page.keyboard.up('Tab');
+  await sleep(300);
+  check('releasing Tab hides the scoreboard', await hidden(a, '#scoreboard'));
+
   await a.page.keyboard.down('Space');
   await sleep(1500);
   await a.page.keyboard.up('Space');

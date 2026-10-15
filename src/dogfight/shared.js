@@ -222,8 +222,16 @@ export function stepFlight(s, c, plane, dt) {
   return s;
 }
 
-/** Bank-free spawn on a ring facing the arena centre. */
-export function pickSpawn(plane, rand = Math.random) {
+/** Spawn at `home` (arena metres) when given, else on a ring facing the arena centre. */
+export function pickSpawn(plane, rand = Math.random, home = null) {
+  if (home) {
+    let x = home[0] + (rand() - 0.5) * 2000;
+    let y = home[1] + (rand() - 0.5) * 2000;
+    const max = ARENA.radiusM * 0.9;
+    const d = Math.hypot(x, y);
+    if (d > max) { x *= max / d; y *= max / d; }
+    return createFlightState(plane, [x, y, 900 + rand() * 1200], rand() * TAU);
+  }
   const angle = rand() * TAU;
   const dist = ARENA.radiusM * (0.45 + rand() * 0.25);
   const p = [Math.cos(angle) * dist, Math.sin(angle) * dist, 1200 + rand() * 1500];
@@ -235,10 +243,27 @@ export function pickSpawn(plane, rand = Math.random) {
 
 const R_EARTH = 6_371_000;
 
-export function arenaToLonLat(x, y) {
-  const lat = ARENA.anchor.lat + (y / R_EARTH) * (180 / Math.PI);
-  const lon = ARENA.anchor.lon
-    + (x / (R_EARTH * Math.cos((ARENA.anchor.lat * Math.PI) / 180))) * (180 / Math.PI);
+export function arenaToLonLat(x, y, anchor = ARENA.anchor) {
+  const lat = anchor.lat + (y / R_EARTH) * (180 / Math.PI);
+  const lon = anchor.lon
+    + (x / (R_EARTH * Math.cos((anchor.lat * Math.PI) / 180))) * (180 / Math.PI);
+  return { lat, lon };
+}
+
+/** Inverse of `arenaToLonLat`: degrees → arena metres [x, y]. */
+export function lonLatToArena(lat, lon, anchor = ARENA.anchor) {
+  return [
+    ((lon - anchor.lon) * Math.PI / 180) * R_EARTH * Math.cos((anchor.lat * Math.PI) / 180),
+    ((lat - anchor.lat) * Math.PI) / 180 * R_EARTH,
+  ];
+}
+
+/** Validate an untrusted `{lat, lon}`; returns a clean copy or null. */
+export function sanitizePlace(raw) {
+  const lat = Number(raw?.lat);
+  const lon = Number(raw?.lon);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (Math.abs(lat) > 80 || Math.abs(lon) > 180) return null;
   return { lat, lon };
 }
 

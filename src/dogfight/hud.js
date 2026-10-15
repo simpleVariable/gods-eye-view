@@ -16,10 +16,23 @@ export function createHud() {
     flash: $('damage-flash'), hitMarker: $('hit-marker'),
     lead: $('lead'), lock: $('lock'), tags: $('tags'),
     radar: $('radar'),
+    controlsBtn: $('controls-btn'), controls: $('controls'),
+    scoreboard: $('scoreboard'), scoreboardBody: $('scoreboard-body'),
   };
   const ctx = el.radar.getContext('2d');
   const tagEls = new Map();
   let hitTimer = 0;
+  let controlsTimer = 0;
+
+  function setControls(open) {
+    clearTimeout(controlsTimer);
+    el.controls.hidden = !open;
+    el.controlsBtn.setAttribute('aria-expanded', String(open));
+  }
+  el.controlsBtn.addEventListener('click', () => {
+    setControls(el.controls.hidden);
+    el.controlsBtn.blur();
+  });
 
   function place(node, point) {
     if (!point) { node.hidden = true; return; }
@@ -30,6 +43,14 @@ export function createHud() {
 
   return {
     show(on) { el.root.hidden = !on; },
+
+    toggleControls() { setControls(el.controls.hidden); },
+
+    /** Open the controls panel, then close it again after `ms`. */
+    flashControls(ms) {
+      setControls(true);
+      controlsTimer = setTimeout(() => setControls(false), ms);
+    },
 
     feed(text, cls = '') {
       const li = document.createElement('li');
@@ -84,9 +105,9 @@ export function createHud() {
       place(el.lock, lock);
     },
 
-    board(players, meId, pingMs, showAll) {
+    board(players, meId, pingMs) {
       el.net.textContent = `${players.length} online · ${pingMs} ms`;
-      const sorted = [...players].sort((a, b) => b.k - a.k || a.d - b.d).slice(0, showAll ? 24 : 6);
+      const sorted = [...players].sort((a, b) => b.k - a.k || a.d - b.d).slice(0, 6);
       el.boardList.replaceChildren(...sorted.map((p) => {
         const li = document.createElement('li');
         if (p.id === meId) li.className = 'me';
@@ -98,6 +119,24 @@ export function createHud() {
         score.textContent = `${p.k}/${p.d}`;
         li.append(name, score);
         return li;
+      }));
+    },
+
+    /** Full-screen scoreboard shown while Tab is held. */
+    scoreboard(players, meId, show) {
+      el.scoreboard.hidden = !show;
+      if (!show) return;
+      const sorted = [...players].sort((a, b) => b.k - a.k || a.d - b.d);
+      el.scoreboardBody.replaceChildren(...sorted.map((p) => {
+        const tr = document.createElement('tr');
+        if (p.id === meId) tr.className = 'me';
+        else if (!p.a) tr.className = 'dead';
+        for (const text of [p.n, PLANES[p.pl]?.name ?? p.pl, p.k, p.d]) {
+          const td = document.createElement('td');
+          td.textContent = text;
+          tr.append(td);
+        }
+        return tr;
       }));
     },
 

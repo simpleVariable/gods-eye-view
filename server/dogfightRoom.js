@@ -7,7 +7,8 @@
  */
 import {
   ARENA, COMBAT, DEFAULT_PLANE, NET, PLANES,
-  clamp, horizontalDistance, orthonormalize, pickSpawn, resolvePlane, sanitizeName,
+  clamp, horizontalDistance, lonLatToArena, orthonormalize, pickSpawn, resolvePlane, sanitizeName,
+  sanitizePlace,
   vAdd, vCross, vDot, vLen, vNorm, vScale, vSub,
 } from '../src/dogfight/shared.js';
 
@@ -34,11 +35,12 @@ function segmentPointDistSq(a, b, c) {
 
 export class DogfightRoom {
   /**
-   * @param {{now?: () => number, rand?: () => number}} [options]
+   * @param {{now?: () => number, rand?: () => number, anchor?: {lat: number, lon: number}}} [options]
    */
-  constructor({ now = Date.now, rand = Math.random } = {}) {
+  constructor({ now = Date.now, rand = Math.random, anchor = ARENA.anchor } = {}) {
     this.now = now;
     this.rand = rand;
+    this.anchor = anchor;
     /** @type {Map<number, object>} */
     this.players = new Map();
     this.bullets = [];
@@ -74,10 +76,12 @@ export class DogfightRoom {
     }
 
     const now = this.now();
+    const place = sanitizePlace(request?.place);
     const player = {
       id: this.nextPlayerId++,
       name,
       plane,
+      home: place ? lonLatToArena(place.lat, place.lon, this.anchor) : null,
       send: (msg) => conn.send(msg),
       kills: 0,
       deaths: 0,
@@ -97,6 +101,7 @@ export class DogfightRoom {
       name,
       plane: plane.id,
       serverTime: now,
+      anchor: this.anchor,
       spawn: this.#spawnPayload(player),
     });
     this.events.push({ e: 'join', n: name, pl: plane.id });
@@ -123,7 +128,7 @@ export class DogfightRoom {
   }
 
   #spawn(player, now) {
-    const s = pickSpawn(player.plane, this.rand);
+    const s = pickSpawn(player.plane, this.rand, player.home);
     player.p = s.p;
     player.f = s.f;
     player.u = s.u;
