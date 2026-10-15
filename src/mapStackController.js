@@ -44,6 +44,15 @@ const DEFAULT_OSM_CREDIT = '© OpenStreetMap contributors';
 // §1a). Constructed via `.fromUrl()`, never a hand-built `{z}/{x}/{y}.terrain`
 // URL (spec correction, spec §1a).
 const REEARTH_TERRAIN_URL = 'https://terrain.reearth.land/cesium-mesh/ellipsoid';
+const KEYLESS_TERRAIN_TIMEOUT_MS = 5000;
+
+export function awaitKeylessTerrain(providerPromise, timeoutMs = KEYLESS_TERRAIN_TIMEOUT_MS) {
+  let timeoutId;
+  const timeout = new Promise((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error('Re:Earth terrain request timed out')), timeoutMs);
+  });
+  return Promise.race([providerPromise, timeout]).finally(() => clearTimeout(timeoutId));
+}
 
 /**
  * Controls the active globe/map stack. Google Photorealistic 3D Tiles remain
@@ -330,7 +339,9 @@ export class MapStackController {
   async _getKeylessTerrainProvider() {
     if (this._reearthTerrainProvider) return this._reearthTerrainProvider;
     try {
-      this._reearthTerrainProvider = await Cesium.CesiumTerrainProvider.fromUrl(REEARTH_TERRAIN_URL);
+      this._reearthTerrainProvider = await awaitKeylessTerrain(
+        Cesium.CesiumTerrainProvider.fromUrl(REEARTH_TERRAIN_URL),
+      );
     } catch (error) {
       console.warn('[mapStackController] Re:Earth terrain unavailable, falling back to flat ellipsoid terrain:', error);
       this._reearthTerrainProvider = new Cesium.EllipsoidTerrainProvider();
