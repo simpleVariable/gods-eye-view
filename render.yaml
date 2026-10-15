@@ -18,6 +18,9 @@ services:
       # Render's free tier runs Node 22 by default; this app requires 24.14.x or 26.x.
       - key: NODE_VERSION
         value: 24.15.0
+      # Chromium is used by local QA scripts, not by the deployed site.
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: "true"
       # Allow Render's onrender.com suffix and the exact service hostname.
       - key: PREVIEW_ALLOWED_HOSTS
         value: ".onrender.com,vista-nivel-dios.onrender.com"
