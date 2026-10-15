@@ -70,6 +70,39 @@ async function runSearch(viewer, options, { result = AUSTIN_RESULT, query = 'aus
   }
 }
 
+test('location search uses the keyless geocoder when Google Maps is unavailable', async () => {
+  const viewer = stubViewer();
+  const hadWindow = Object.hasOwn(globalThis, 'window');
+  const priorWindow = globalThis.window;
+  const priorFetch = globalThis.fetch;
+  globalThis.window = {};
+  globalThis.fetch = async (url) => {
+    assert.match(String(url), /^\/api\/geocode\?/);
+    return {
+      ok: true,
+      json: async () => ({
+        lat: 40.4168,
+        lon: -3.7038,
+        label: 'Madrid, Spain',
+        osmType: 'city',
+        viewport: {
+          southwest: { lat: 40.30, lng: -3.85 },
+          northeast: { lat: 40.52, lng: -3.55 },
+        },
+      }),
+    };
+  };
+  try {
+    const result = await searchAndFlyTo(viewer, 'Madrid');
+    assert.equal(result.label, 'Madrid, Spain');
+    assert.equal(viewer.flights.length, 1);
+  } finally {
+    globalThis.fetch = priorFetch;
+    if (hadWindow) globalThis.window = priorWindow;
+    else delete globalThis.window;
+  }
+});
+
 /** Read a recorded viewport flight back as a degrees rectangle. */
 function flownRectangleDegrees(viewer, index = 0) {
   const rectangle = viewer.flights[index]?.destination;
